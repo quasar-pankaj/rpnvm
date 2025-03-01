@@ -38,131 +38,128 @@ void ripl::Compiler::compile() {
   while (!parser.eof()) {
     Token t = parser.get();
 
-    if (t.type == TokenType::LONG) {
+    switch (t.type) {
+    case TokenType::LONG: {
       emitInstruction(ripl::Instruction::PUSHL);
       long l = std::stol(t.lexeme);
       emitLong(l);
-      continue;
-    }
-    if (t.type == TokenType::DOUBLE) {
+    } break;
+    case TokenType::DOUBLE: {
       emitInstruction(ripl::Instruction::PUSHD);
       double l = std::stod(t.lexeme);
       emitDouble(l);
-      continue;
-    }
-    if (t.type == TokenType::BOOL) {
+    } break;
+    case TokenType::BOOL: {
       emitInstruction(ripl::Instruction::PUSHB);
       std::string l = ripl::toLower(t.lexeme);
       bool truth = (l == "true");
       emitBool(truth);
-      continue;
-    }
-    if (t.type == TokenType::STRING) {
+    } break;
+    case TokenType::STRING: {
       emitInstruction(ripl::Instruction::PUSHS);
       int len = t.lexeme.length();
       emitString(t.lexeme);
-      continue;
-    }
-    if (t.type == TokenType::IDENTIFIER) {
+    } break;
+    case TokenType::IDENTIFIER: {
       if (t.lexeme == "+") {
         emitInstruction(Instruction::ADD);
-        continue;
+        break;
       }
       if (t.lexeme == "-") {
         emitInstruction(Instruction::SUB);
-        continue;
+        break;
       }
       if (t.lexeme == "*") {
         emitInstruction(Instruction::MUL);
-        continue;
+        break;
       }
       if (t.lexeme == "/") {
         emitInstruction(Instruction::DIV);
-        continue;
+        break;
       }
       if (t.lexeme == "%") {
         emitInstruction(Instruction::MOD);
-        continue;
+        break;
       }
       if (t.lexeme == "&&") {
         emitInstruction(Instruction::AND);
-        continue;
+        break;
       }
       if (t.lexeme == "||") {
         emitInstruction(Instruction::OR);
-        continue;
+        break;
       }
       if (t.lexeme == "!") {
         emitInstruction(Instruction::NOT);
-        continue;
+        break;
       }
       if (t.lexeme == "==") {
         emitInstruction(Instruction::EQ);
-        continue;
+        break;
       }
       if (t.lexeme == "!=") {
         emitInstruction(Instruction::NEQ);
-        continue;
+        break;
       }
       if (t.lexeme == ">") {
         emitInstruction(Instruction::GT);
-        continue;
+        break;
       }
       if (t.lexeme == "<") {
         emitInstruction(Instruction::LT);
-        continue;
+        break;
       }
       if (t.lexeme == ">=") {
         emitInstruction(Instruction::GTE);
-        continue;
+        break;
       }
       if (t.lexeme == "<=") {
         emitInstruction(Instruction::LTE);
-        continue;
+        break;
       }
       if (t.lexeme == "dup") {
         emitInstruction(Instruction::DUP);
-        continue;
+        break;
       }
       if (t.lexeme == "swap") {
         emitInstruction(Instruction::SWAP);
-        continue;
+        break;
       }
       if (t.lexeme == "rotup") {
         emitInstruction(Instruction::ROTUP);
-        continue;
+        break;
       }
       if (t.lexeme == "rotdn") {
         emitInstruction(Instruction::ROTDN);
-        continue;
+        break;
       }
       if (t.lexeme == "drop") {
         emitInstruction(Instruction::DROP);
-        continue;
+        break;
       }
       if (t.lexeme == "++") {
         emitInstruction(Instruction::INC);
-        continue;
+        break;
       }
       if (t.lexeme == "--") {
         emitInstruction(Instruction::DEC);
-        continue;
+        break;
       }
       if (t.lexeme == "return" || t.lexeme == "}") {
         emitInstruction(Instruction::RET);
-        continue;
+        break;
       }
       if (t.lexeme == "expect") {
         emitInstruction(Instruction::EXPECT);
-        continue;
+        break;
       }
       if (t.lexeme == "end") {
         emitInstruction(Instruction::END);
-        continue;
+        break;
       }
       if (t.lexeme == "=") {
         emitInstruction(Instruction::PRINT);
-        continue;
+        break;
       }
       // The algorithm for call-subroutine works as follows:-
       // First a check is performed to see if the entry exists the frame is
@@ -177,20 +174,20 @@ void ripl::Compiler::compile() {
         if (_callMap.contains(_lastToken)) {
           auto frame = _callMap[_lastToken];
           if (frame->address() == -1) {
-            frame->addCall(currentDiskOffset());
+            frame->addCall(currentOffset());
             emitInt(0);
           } else {
             emitInt(frame->address());
           }
-          continue;
+          break;
         }
         CallFrame frame;
         std::shared_ptr<CallFrame> ptr = std::make_shared<CallFrame>(frame);
-        ptr->addCall(currentDiskOffset());
+        ptr->addCall(currentOffset());
         _callMap.insert({_lastToken, ptr});
         emitInt(0); // emit a place holder int. this will be overwritten later
                     // using the disk offset above.
-        continue;
+        break;
       }
       // the logic of the following token is as follows:-
       // if the entry for the _lastToken exists we have at least one call
@@ -201,72 +198,70 @@ void ripl::Compiler::compile() {
       if (t.lexeme == "{") {
         if (_callMap.contains(_lastToken)) {
           auto frame = _callMap[_lastToken];
-          int currAddr = currentDiskOffset();
+          int currAddr = currentOffset();
           for (int offset : frame->getCalls()) {
             seekToOffset(offset);
-            emitInt(currentMemoryOffset());
+            emitInt(currAddr);
           }
           seekToOffset(currAddr);
         } else {
           CallFrame frame;
-          frame.address(currentMemoryOffset() - 1);
+          frame.address(currentOffset() - 1);
           std::shared_ptr<CallFrame> ptr = std::make_shared<CallFrame>(frame);
           _callMap.insert({_lastToken, ptr});
         }
 
-        continue;
+        break;
       }
       if (t.lexeme == "var") {
         emitInstruction(Instruction::VAR);
         emitString(_lastToken);
-        continue;
+        break;
       }
       if (t.lexeme == "<-") {
         emitInstruction(Instruction::ASSIGN);
         emitString(_lastToken);
-        continue;
+        break;
       }
       if (t.lexeme == "->") {
         emitInstruction(Instruction::DEREF);
         emitString(_lastToken);
-        continue;
+        break;
       }
       if (t.lexeme == "if") {
         createStackFrame(BranchType::CONDITIONAL);
-        saveCurrentMemoryOffset();
         emitInstruction(Instruction::JF);
-        saveCurrentDiskOffset();
+        saveCurrentOffset();
         emitInt(0);
-        continue;
+        break;
       }
       if (t.lexeme == "endif") {
-        int curr = currentDiskOffset();
+        int curr = currentOffset();
         auto frame = currentStackFrame();
-        seekToOffset(frame->diskOffset());
-        emitInt(currentMemoryOffset());
+        seekToOffset(frame->offset());
+        emitInt(curr);
         seekToOffset(curr);
         dropStackFrame();
-        continue;
+        break;
       }
       if (t.lexeme == "else") {
         auto frame = currentStackFrame();
         dropStackFrame();
         createStackFrame(BranchType::CONDITIONAL);
-        saveCurrentMemoryOffset();
-        int pos = currentMemoryOffset();
+        int pos = currentOffset();
         emitInstruction(Instruction::JMP);
-        saveCurrentDiskOffset();
+        saveCurrentOffset();
         emitInt(0);
-        int diskOffset = currentDiskOffset();
-        seekToOffset(frame->diskOffset());
+        int diskOffset = currentOffset();
+        seekToOffset(frame->offset());
         emitInt(pos);
         seekToOffset(diskOffset);
-        continue;
+        break;
       }
       if (t.lexeme == "for") {
         emitInstruction(Instruction::DUP);
         startLoop(Instruction::JZ);
-        continue;
+        break;
       }
       if (t.lexeme == "endfor") {
         fillOutContinues();
@@ -276,11 +271,11 @@ void ripl::Compiler::compile() {
         fillOutStartingJump();
         fillOutBreaks();
         closeLoop();
-        continue;
+        break;
       }
       if (t.lexeme == "while") {
         startLoop(Instruction::JF);
-        continue;
+        break;
       }
       if (t.lexeme == "endwhile") {
         fillOutContinues();
@@ -288,21 +283,22 @@ void ripl::Compiler::compile() {
         fillOutStartingJump();
         fillOutBreaks();
         closeLoop();
-        continue;
+        break;
       }
       if (t.lexeme == "break") {
         emitInstruction(Instruction::JMP);
         addBreak();
         emitInt(0);
-        continue;
+        break;
       }
       if (t.lexeme == "continue") {
         emitInstruction(Instruction::JMP);
         addContinue();
         emitInt(0);
-        continue;
+        break;
       }
       _lastToken = t.lexeme;
+    }
     }
   }
 }
@@ -315,7 +311,6 @@ void ripl::Compiler::emit(const char *bytes, int len) {
 
 void ripl::Compiler::emitInstruction(const ripl::Instruction &instruction) {
   emit((unsigned char)instruction);
-  _instructionOffset++;
 }
 
 void ripl::Compiler::emitLength(const int len) { emitInt(len); }
@@ -345,9 +340,7 @@ void ripl::Compiler::emitString(const std::string &value) {
   delete[] bytes;
 }
 
-int ripl::Compiler::currentMemoryOffset() { return _instructionOffset; }
-
-int ripl::Compiler::currentDiskOffset() { return _out.tellp(); }
+int ripl::Compiler::currentOffset() { return _out.tellp(); }
 
 std::shared_ptr<ripl::StackFrame> ripl::Compiler::currentStackFrame() {
   auto frame = _buildStack.top();
@@ -375,9 +368,8 @@ void ripl::Compiler::closeLoop() {
 
 void ripl::Compiler::startLoop(ripl::Instruction instruction) {
   openNewLoop();
-  saveCurrentMemoryOffset();
+  saveCurrentOffset();
   emitInstruction(instruction);
-  saveCurrentDiskOffset();
   emitInt(0);
 }
 
@@ -385,22 +377,17 @@ int ripl::Compiler::loopLevel() { return _loopLevel; }
 
 void ripl::Compiler::addBreak() {
   auto frame = currentStackFrame();
-  frame->addToBreaks(currentDiskOffset());
+  frame->addToBreaks(currentOffset());
 }
 
 void ripl::Compiler::addContinue() {
   auto frame = currentStackFrame();
-  frame->addToContinues(currentDiskOffset());
+  frame->addToContinues(currentOffset());
 }
 
-void ripl::Compiler::saveCurrentDiskOffset() {
+void ripl::Compiler::saveCurrentOffset() {
   auto frame = currentStackFrame();
-  frame->diskOffset(currentDiskOffset());
-}
-
-void ripl::Compiler::saveCurrentMemoryOffset() {
-  auto frame = currentStackFrame();
-  frame->memoryOffset(currentMemoryOffset());
+  frame->offset(currentOffset());
 }
 
 void ripl::Compiler::seekToOffset(int offset) { _out.seekp(offset); }
@@ -418,10 +405,10 @@ void ripl::Compiler::fillOutBreaks() {
 }
 
 void ripl::Compiler::fillOutExits(std::vector<int> &offsets) {
-  int pos = currentDiskOffset();
+  int pos = currentOffset();
   for (int diskoffset : offsets) {
     seekToOffset(diskoffset);
-    emitInt(currentMemoryOffset());
+    emitInt(pos);
   }
   seekToOffset(pos);
 }
@@ -429,13 +416,14 @@ void ripl::Compiler::fillOutExits(std::vector<int> &offsets) {
 void ripl::Compiler::addClosingJump() {
   auto frame = currentStackFrame();
   emitInstruction(Instruction::JMP);
-  emitInt(frame->memoryOffset());
+  emitInt(frame->offset());
 }
 
 void ripl::Compiler::fillOutStartingJump() {
   auto frame = currentStackFrame();
-  int pos = currentDiskOffset();
-  seekToOffset(frame->diskOffset());
-  emitInt(currentMemoryOffset());
+  int pos = currentOffset();
+  seekToOffset(frame->offset() +
+               1); // skip the instruction and get to the address
+  emitInt(pos);
   seekToOffset(pos);
 }

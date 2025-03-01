@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <utility>
 #include <vector>
 namespace ripl {
 enum class BranchType {
@@ -24,19 +23,16 @@ public:
   std::vector<int> fetchContinues() { return _continues; }
 
   int loopLevel() { return _loopLevel; }
-  int diskOffset() { return _diskOffset; }
-  int memoryOffset() { return _memoryOffset; }
 
-  void diskOffset(int offset) { _diskOffset = offset; }
-  void memoryOffset(int offset) { _memoryOffset = offset; }
+  int offset() { return _offset; }
+  void offset(int offset) { _offset = offset; }
 
 private:
   std::shared_ptr<StackFrame> _parent;
   int _loopLevel;
-  int _diskOffset;
-  int _memoryOffset;
+  int _offset;
   BranchType _branchType;
-  std::vector<int> _continues; //[diskOffset]
-  std::vector<int> _breaks;    //[diskOffset]
+  std::vector<int> _continues; //[Offset]
+  std::vector<int> _breaks;    //[Offset]
 };
 } // namespace ripl

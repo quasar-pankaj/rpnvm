@@ -22,8 +22,7 @@ ripl::Dism::Dism(char *filename) {
 ripl::Dism::~Dism() { _buf.clear(); }
 
 void ripl::Dism::disassemble() {
-  int addr = 0;
-  for (_ip = 0; !_buf.eof(); _ip++, addr++) {
+  for (_ip = 0; !_buf.eof(); _ip++) {
     char c;
     _buf.get(c);
     Instruction mnemonic = (Instruction)c;
@@ -33,139 +32,139 @@ void ripl::Dism::disassemble() {
       break;
     case Instruction::PUSHL: {
       long l = readLong();
-      std::cout << addr << " " << "PUSHL " << l << std::endl;
+      std::cout << _ip << " " << "PUSHL " << l << std::endl;
       _ip += sizeof(l);
     } break;
     case Instruction::PUSHD: {
       double l = readDouble();
-      std::cout << addr << " " << "PUSHD " << l << std::endl;
+      std::cout << _ip << " " << "PUSHD " << l << std::endl;
       _ip += sizeof(l);
     } break;
     case Instruction::PUSHB: {
       bool l = readBool();
-      std::cout << addr << " " << "PUSHB " << l << std::endl;
+      std::cout << _ip << " " << "PUSHB " << l << std::endl;
       _ip += sizeof(l);
     } break;
     case Instruction::PUSHS: {
       std::string l = readString();
-      std::cout << addr << " " << "PUSHS \"" << l << "\"" << std::endl;
+      std::cout << _ip << " " << "PUSHS \"" << l << "\"" << std::endl;
       _ip += sizeof(int);
       _ip += l.length();
     } break;
     case Instruction::ADD: {
-      std::cout << addr << " ADD" << std::endl;
+      std::cout << _ip << " ADD" << std::endl;
     } break;
     case Instruction::SUB: {
-      std::cout << addr << " SUB" << std::endl;
+      std::cout << _ip << " SUB" << std::endl;
     } break;
     case Instruction::MUL: {
-      std::cout << addr << " MUL" << std::endl;
+      std::cout << _ip << " MUL" << std::endl;
     } break;
     case Instruction::DIV: {
-      std::cout << addr << " DIV" << std::endl;
+      std::cout << _ip << " DIV" << std::endl;
     } break;
     case Instruction::MOD: {
-      std::cout << addr << " MOD" << std::endl;
+      std::cout << _ip << " MOD" << std::endl;
     } break;
     case Instruction::AND: {
-      std::cout << addr << " AND" << std::endl;
+      std::cout << _ip << " AND" << std::endl;
     } break;
     case Instruction::OR: {
-      std::cout << addr << " OR" << std::endl;
+      std::cout << _ip << " OR" << std::endl;
     } break;
     case Instruction::NOT: {
-      std::cout << addr << " NOT" << std::endl;
+      std::cout << _ip << " NOT" << std::endl;
     } break;
     case Instruction::EQ: {
-      std::cout << addr << " EQ" << std::endl;
+      std::cout << _ip << " EQ" << std::endl;
     } break;
     case Instruction::NEQ: {
-      std::cout << addr << " NEQ" << std::endl;
+      std::cout << _ip << " NEQ" << std::endl;
     } break;
     case Instruction::GT: {
-      std::cout << addr << " GT" << std::endl;
+      std::cout << _ip << " GT" << std::endl;
     } break;
     case Instruction::LT: {
-      std::cout << addr << " LT" << std::endl;
+      std::cout << _ip << " LT" << std::endl;
     } break;
     case Instruction::GTE: {
-      std::cout << addr << " GTE" << std::endl;
+      std::cout << _ip << " GTE" << std::endl;
     } break;
     case Instruction::LTE: {
-      std::cout << addr << " LTE" << std::endl;
+      std::cout << _ip << " LTE" << std::endl;
     } break;
     case Instruction::JZ: {
       int addrparm = readInt();
-      std::cout << addr << " JZ " << addrparm << std::endl;
+      std::cout << _ip << " JZ " << addrparm << std::endl;
       _ip += sizeof(int);
     } break;
     case Instruction::JF: {
       int addrparm = readInt();
-      std::cout << addr << " JF " << addrparm << std::endl;
+      std::cout << _ip << " JF " << addrparm << std::endl;
       _ip += sizeof(int);
     } break;
     case Instruction::JMP: {
       int addrparm = readInt();
-      std::cout << addr << " JMP " << addrparm << std::endl;
+      std::cout << _ip << " JMP " << addrparm << std::endl;
       _ip += sizeof(int);
     } break;
     case Instruction::ID:
       break;
     case Instruction::VAR: {
       std::string name = readString();
-      std::cout << addr << " " << "VAR " << name << std::endl;
+      std::cout << _ip << " " << "VAR " << name << std::endl;
       _ip += sizeof(int);
       _ip += name.length();
     } break;
     case Instruction::ASSIGN: {
       std::string name = readString();
-      std::cout << addr << " " << "ASSIGN " << name << std::endl;
+      std::cout << _ip << " " << "ASSIGN " << name << std::endl;
       _ip += sizeof(int);
       _ip += name.length();
     } break;
     case Instruction::DEREF: {
       std::string name = readString();
-      std::cout << addr << " " << "DEREF " << name << std::endl;
+      std::cout << _ip << " " << "DEREF " << name << std::endl;
       _ip += sizeof(int);
       _ip += name.length();
     } break;
     case Instruction::CALL: {
       int addrparm = readInt();
-      std::cout << addr << " " << "CALL " << addrparm << std::endl;
+      std::cout << _ip << " " << "CALL " << addrparm << std::endl;
       _ip += sizeof(int);
     } break;
     case Instruction::RET: {
-      std::cout << addr << " RET" << std::endl;
+      std::cout << _ip << " RET" << std::endl;
     } break;
     case Instruction::DUP: {
-      std::cout << addr << " DUP" << std::endl;
+      std::cout << _ip << " DUP" << std::endl;
     } break;
     case Instruction::SWAP: {
-      std::cout << addr << " SWAP" << std::endl;
+      std::cout << _ip << " SWAP" << std::endl;
     } break;
     case Instruction::ROTUP: {
-      std::cout << addr << " ROTUP" << std::endl;
+      std::cout << _ip << " ROTUP" << std::endl;
     } break;
     case Instruction::ROTDN: {
-      std::cout << addr << " ROTDN" << std::endl;
+      std::cout << _ip << " ROTDN" << std::endl;
     } break;
     case Instruction::DROP: {
-      std::cout << addr << " DROP" << std::endl;
+      std::cout << _ip << " DROP" << std::endl;
     } break;
     case Instruction::INC: {
-      std::cout << addr << " INC" << std::endl;
+      std::cout << _ip << " INC" << std::endl;
     } break;
     case Instruction::DEC: {
-      std::cout << addr << " DEC" << std::endl;
+      std::cout << _ip << " DEC" << std::endl;
     } break;
     case Instruction::EXPECT: {
-      std::cout << addr << " EXPECT" << std::endl;
+      std::cout << _ip << " EXPECT" << std::endl;
     } break;
     case Instruction::PRINT: {
-      std::cout << addr << " PRINT" << std::endl;
+      std::cout << _ip << " PRINT" << std::endl;
     } break;
     case Instruction::END: {
-      std::cout << addr << " END" << std::endl;
+      std::cout << _ip << " END" << std::endl;
     } break;
     }
   }

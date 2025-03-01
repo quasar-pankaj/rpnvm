@@ -27,10 +27,8 @@ public:
   void emitString(const std::string &s);
   void emitInstruction(const Instruction &instruction);
 
-  int currentDiskOffset();
-  int currentMemoryOffset();
-  void saveCurrentDiskOffset();
-  void saveCurrentMemoryOffset();
+  int currentOffset();
+  void saveCurrentOffset();
   void fillOutBreaks();
   void fillOutContinues();
   void fillOutExits(std::vector<int> &offsets);
@@ -59,7 +57,6 @@ private:
 
   std::stack<std::shared_ptr<StackFrame>> _buildStack; // Build Stack
   std::map<std::string, std::shared_ptr<CallFrame>> _callMap;
-  int _instructionOffset = 0;
   int _loopLevel = 0;
 };
 } // namespace ripl
