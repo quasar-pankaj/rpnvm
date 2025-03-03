@@ -33,8 +33,6 @@ add_executable(
   ${PROJECT_NAME}
   src/main.cpp
   src/engine.cpp
-  src/builder.cpp
-  src/misc.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

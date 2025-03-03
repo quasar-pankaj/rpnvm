@@ -1,5 +1,4 @@
 #include "engine.hpp"
-#include "builder.hpp"
 #include <iostream>
 
 int main(int argc, char *argv[]) {
@@ -7,9 +6,7 @@ int main(int argc, char *argv[]) {
     std::cout << "Usage: " << argv[0] << " <scriptname>.bc" << std::endl;
     return 0;
   }
-  ripl::Engine engine;
-  ripl::Builder builder(&engine, argv[1]);
-  builder.load();
+  ripl::Engine engine(argv[1]);
   engine.run();
   return 0;
 }
