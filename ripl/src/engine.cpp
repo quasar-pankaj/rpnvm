@@ -56,7 +56,7 @@ ripl::Engine::~Engine() { _variables.clear(); }
 void ripl::Engine::run() {
   _ip = _code;
   const char *end = _code + _codeLen;
-  while (!(_ip == end || _isFinished)) {
+  while (_ip < end && !_isFinished) {
     Instruction mnemonic = (Instruction)*_ip;
 
     switch (mnemonic) {
@@ -99,7 +99,6 @@ void ripl::Engine::run() {
           push(result);
           break;
         }
-        push(drhs);
         std::cerr << "Invalid lhs value." << std::endl;
         break;
       }
@@ -123,7 +122,6 @@ void ripl::Engine::run() {
           push(result);
           break;
         }
-        push(lrhs);
         std::cerr << "Invalid lhs value." << std::endl;
         break;
       }
@@ -147,7 +145,6 @@ void ripl::Engine::run() {
           push(result);
           break;
         }
-        push(lrhs);
         std::cerr << "Invalid lhs value." << std::endl;
         break;
       }
@@ -169,6 +166,7 @@ void ripl::Engine::run() {
           break;
         }
         std::cerr << "Invalid LHS value." << std::endl;
+        break;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -185,6 +183,7 @@ void ripl::Engine::run() {
           break;
         }
         std::cerr << "Invalid RHS value." << std::endl;
+        break;
       }
     } break;
     case Instruction::MUL: {
@@ -203,6 +202,7 @@ void ripl::Engine::run() {
           break;
         }
         std::cerr << "Invalid LHS value." << std::endl;
+        break;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -219,6 +219,7 @@ void ripl::Engine::run() {
           break;
         }
         std::cerr << "Invalid RHS value." << std::endl;
+        break;
       }
     } break;
     case Instruction::DIV: {
@@ -237,6 +238,7 @@ void ripl::Engine::run() {
           break;
         }
         std::cerr << "Invalid LHS value." << std::endl;
+        break;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -253,6 +255,7 @@ void ripl::Engine::run() {
           break;
         }
         std::cerr << "Invalid RHS value." << std::endl;
+        break;
       }
     } break;
     case Instruction::MOD: {
