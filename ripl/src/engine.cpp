@@ -4,6 +4,7 @@
 #include <any>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <memory>
@@ -23,6 +24,7 @@ ripl::Engine::Engine(char *filename) {
   _codeLen = in.tellg();
   in.seekg(0, std::ios::beg);
 
+  _code = new char[_codeLen];
   in.read(_code, _codeLen);
 }
 
@@ -51,7 +53,25 @@ template <typename T> void ripl::Engine::push(T value) {
   _ds.push(ptr);
 }
 
-ripl::Engine::~Engine() { _variables.clear(); }
+ripl::Engine::~Engine() {
+  _variables.clear();
+  delete[] _code;
+}
+
+template <typename L, typename R>
+bool ripl::Engine::tryOperate(R rhs, std::function<void(L, R)> operate) {
+  auto [valid, lhs] = fetch<L>();
+  if (!valid) {
+    return false;
+  }
+  operate(lhs, rhs);
+  return true;
+}
+
+template <typename L, typename R, typename... Rs>
+bool ripl::Engine::tryOperate(L lhs, R rhs, std::function<void(L, R)> operate) {
+
+}
 
 void ripl::Engine::run() {
   _ip = _code;
@@ -63,251 +83,319 @@ void ripl::Engine::run() {
     case Instruction::NOP:
       break;
     case Instruction::PUSHL: {
+      _ip++;
       long l = read<long>();
       push(l);
     } break;
     case Instruction::PUSHD: {
+      _ip++;
       double d = read<double>();
       push(d);
     } break;
     case Instruction::PUSHB: {
+      _ip++;
       bool b = read<bool>();
       push(b);
     } break;
     case Instruction::PUSHS: {
+      _ip++;
       std::string s = read<std::string>();
       push(s);
     } break;
     case Instruction::ADD: {
-      auto [drvalid, drhs] = fetch<double>();
+      auto [drvalid, drvalue] = fetch<double>();
       if (drvalid) {
-        auto [dlvalid, dlhs] = fetch<double>();
+        bool dlvalid =
+            tryOperate<double, double>(drvalue, [this](double lhs, double rhs) {
+              double result = lhs + rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = dlhs + drhs;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llhs] = fetch<long>();
+        bool llvalid =
+            tryOperate<long, double>(drvalue, [this](long lhs, double rhs) {
+              double result = lhs + rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = llhs + drhs;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [slvalid, slhs] = fetch<std::string>();
+        bool slvalid = tryOperate<std::string, double>(
+            drvalue, [this](std::string lhs, double rhs) {
+              std::string result = lhs + std::to_string(rhs);
+              push(result);
+            });
         if (slvalid) {
-          auto result = slhs + std::to_string(drhs);
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid lhs value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS value." << std::endl;
       }
-      auto [lrvalid, lrhs] = fetch<long>();
+      auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
-        auto [dlvalid, dlhs] = fetch<double>();
+        bool dlvalid =
+            tryOperate<double, long>(lrvalue, [this](double lhs, long rhs) {
+              double result = lhs + rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = dlhs + lrhs;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llhs] = fetch<long>();
+        bool llvalid =
+            tryOperate<long, long>(lrvalue, [this](long lhs, long rhs) {
+              long result = lhs + rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = llhs + lrhs;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [slvalid, slhs] = fetch<std::string>();
+        bool slvalid = tryOperate<std::string, long>(
+            lrvalue, [this](std::string lhs, long rhs) {
+              std::string result = lhs + std::to_string(rhs);
+              push(result);
+            });
         if (slvalid) {
-          auto result = slhs + std::to_string(lrhs);
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid lhs value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS value." << std::endl;
       }
-      auto [srvalid, srhs] = fetch<std::string>();
+      auto [srvalid, srvalue] = fetch<std::string>();
       if (srvalid) {
-        auto [dlvalid, dlhs] = fetch<double>();
+        bool dlvalid = tryOperate<double, std::string>(
+            srvalue, [this](double lhs, std::string rhs) {
+              std::string result = std::to_string(lhs) + rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = std::to_string(dlhs) + srhs;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llhs] = fetch<long>();
+        bool llvalid = tryOperate<long, std::string>(
+            srvalue, [this](long lhs, std::string rhs) {
+              std::string result = std::to_string(lhs) + rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = std::to_string(llhs) + srhs;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [slvalid, slhs] = fetch<std::string>();
+        bool slvalid = tryOperate<std::string, std::string>(
+            srvalue, [this](std::string lhs, std::string rhs) {
+              std::string result = lhs + rhs;
+              push(result);
+            });
         if (slvalid) {
-          auto result = slhs + srhs;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid lhs value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS value." << std::endl;
       }
-      std::cerr << "Invalid RHS value." << std::endl;
+      _ip++;
     } break;
     case Instruction::SUB: {
       auto [drvalid, drvalue] = fetch<double>();
       if (drvalid) {
-        auto [dlvalid, dlvalue] = fetch<double>();
+        bool dlvalid =
+            tryOperate<double, double>(drvalue, [this](double lhs, double rhs) {
+              double result = lhs - rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = dlvalue - drvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llvalue] = fetch<long>();
+        bool llvalid =
+            tryOperate<long, double>(drvalue, [this](long lhs, double rhs) {
+              double result = lhs - rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = llvalue - drvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid LHS value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS." << std::endl;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
-        auto [dlvalid, dlvalue] = fetch<double>();
+        bool dlvalid =
+            tryOperate<double, long>(lrvalue, [this](double lhs, long rhs) {
+              double result = lhs - rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = dlvalue - lrvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llvalue] = fetch<long>();
+        bool llvalid =
+            tryOperate<long, long>(lrvalue, [this](long lhs, long rhs) {
+              long result = lhs - rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = llvalue - lrvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid RHS value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS." << std::endl;
       }
+      std::cerr << "Invalid RHS." << std::endl;
+      _ip++;
     } break;
     case Instruction::MUL: {
       auto [drvalid, drvalue] = fetch<double>();
       if (drvalid) {
-        auto [dlvalid, dlvalue] = fetch<double>();
+        bool dlvalid =
+            tryOperate<double, double>(drvalue, [this](double lhs, double rhs) {
+              double result = lhs * rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = dlvalue * drvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llvalue] = fetch<long>();
+        bool llvalid =
+            tryOperate<long, double>(drvalue, [this](long lhs, double rhs) {
+              double result = lhs * rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = llvalue * drvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid LHS value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS." << std::endl;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
-        auto [dlvalid, dlvalue] = fetch<double>();
+        bool dlvalid =
+            tryOperate<double, long>(lrvalue, [this](double lhs, long rhs) {
+              double result = lhs * rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = dlvalue * lrvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llvalue] = fetch<long>();
+        bool llvalid =
+            tryOperate<long, long>(lrvalue, [this](long lhs, long rhs) {
+              long result = lhs * rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = llvalue * lrvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid RHS value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS." << std::endl;
       }
+      std::cerr << "Invalid RHS." << std::endl;
+      _ip++;
     } break;
     case Instruction::DIV: {
       auto [drvalid, drvalue] = fetch<double>();
       if (drvalid) {
-        auto [dlvalid, dlvalue] = fetch<double>();
+        bool dlvalid =
+            tryOperate<double, double>(drvalue, [this](double lhs, double rhs) {
+              double result = lhs / rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = dlvalue / drvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llvalue] = fetch<long>();
+        bool llvalid =
+            tryOperate<long, double>(drvalue, [this](long lhs, double rhs) {
+              double result = lhs / rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = llvalue / drvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid LHS value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS." << std::endl;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
-        auto [dlvalid, dlvalue] = fetch<double>();
+        bool dlvalid =
+            tryOperate<double, long>(lrvalue, [this](double lhs, long rhs) {
+              double result = lhs / rhs;
+              push(result);
+            });
         if (dlvalid) {
-          auto result = dlvalue / lrvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        auto [llvalid, llvalue] = fetch<long>();
+        bool llvalid =
+            tryOperate<long, long>(lrvalue, [this](long lhs, long rhs) {
+              double result = (double)lhs / rhs;
+              push(result);
+            });
         if (llvalid) {
-          auto result = llvalue / lrvalue;
-          push(result);
-          break;
+          _ip++;
+          continue;
         }
-        std::cerr << "Invalid RHS value." << std::endl;
-        break;
+        std::cerr << "Invalid LHS." << std::endl;
       }
+      std::cerr << "Invalid RHS." << std::endl;
+      _ip++;
     } break;
     case Instruction::MOD: {
       auto [rvalid, rvalue] = fetch<long>();
       if (!rvalid) {
         std::cerr << "Expected a long on the left hand side." << std::endl;
-        break;
+        continue;
       }
       auto [lvalid, lvalue] = fetch<long>();
       if (!lvalid) {
         std::cerr << "expected a long on lvalue." << std::endl;
-        break;
+        continue;
       }
       auto result = lvalue % rvalue;
       push(result);
+      _ip++;
     } break;
     case Instruction::AND: {
       auto [rvalid, rvalue] = fetch<bool>();
       if (!rvalid) {
         std::cerr << "Expected a boolean on right hand side." << std::endl;
-        break;
+        continue;
       }
       auto [lvalid, lvalue] = fetch<bool>();
       if (!lvalid) {
         std::cerr << "Expected a boolean on left hand side." << std::endl;
-        break;
+        continue;
       }
       auto result = lvalue && rvalue;
       push(result);
+      _ip++;
     } break;
     case Instruction::OR: {
       auto [rvalid, rvalue] = fetch<bool>();
       if (!rvalid) {
         std::cerr << "Expected a boolean on right hand side." << std::endl;
-        break;
+        continue;
       }
       auto [lvalid, lvalue] = fetch<bool>();
       if (!lvalid) {
         std::cerr << "Expected a boolean on left hand side." << std::endl;
-        break;
+        continue;
       }
       auto result = lvalue || rvalue;
       push(result);
+      _ip++;
     } break;
     case Instruction::NOT: {
       auto [valid, value] = fetch<bool>();
       if (!valid) {
         std::cerr << "Expected a bool on stack." << std::endl;
-        break;
+        continue;
       }
       auto result = !value;
       push(result);
+      _ip++;
     } break;
     case Instruction::EQ: {
       auto [drvalid, drvalue] = fetch<double>();
@@ -316,12 +404,14 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue == drvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue == drvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -329,13 +419,16 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue == lrvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue == lrvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
+      _ip++;
     } break;
     case Instruction::NEQ: {
       auto [drvalid, drvalue] = fetch<double>();
@@ -344,12 +437,14 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue != drvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue != drvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -357,13 +452,16 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue != lrvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue != lrvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
+      _ip++;
     } break;
     case Instruction::GT: {
       auto [drvalid, drvalue] = fetch<double>();
@@ -372,12 +470,14 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue > drvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue > drvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -385,13 +485,16 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue > lrvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue > lrvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
+      _ip++;
     } break;
     case Instruction::LT: {
       auto [drvalid, drvalue] = fetch<double>();
@@ -400,12 +503,14 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue < drvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue < drvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -413,13 +518,16 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue < lrvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue < lrvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
+      _ip++;
     } break;
     case Instruction::GTE: {
       auto [drvalid, drvalue] = fetch<double>();
@@ -428,12 +536,14 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue >= drvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue >= drvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -441,13 +551,16 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue >= lrvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue >= lrvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
+      _ip++;
     } break;
     case Instruction::LTE: {
       auto [drvalid, drvalue] = fetch<double>();
@@ -456,12 +569,14 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue <= drvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue <= drvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
       auto [lrvalid, lrvalue] = fetch<long>();
       if (lrvalid) {
@@ -469,15 +584,19 @@ void ripl::Engine::run() {
         if (dlvalid) {
           auto result = dlvalue <= lrvalue;
           push(result);
-          break;
+          _ip++;
+          continue;
         }
         auto [llvalid, llvalue] = fetch<long>();
         auto result = llvalue <= lrvalue;
         push(result);
-        break;
+        _ip++;
+        continue;
       }
+      _ip++;
     } break;
     case Instruction::JZ: {
+      _ip++;
       int offset = read<int>();
       auto [valid, value] = fetch<long>();
       if (valid && (value == 0)) {
@@ -485,6 +604,7 @@ void ripl::Engine::run() {
       }
     } break;
     case Instruction::JF: {
+      _ip++;
       int offset = read<int>();
       auto [valid, value] = fetch<bool>();
       if (valid && value) {
@@ -492,29 +612,34 @@ void ripl::Engine::run() {
       }
     } break;
     case Instruction::JMP: {
+      _ip++;
       int offset = read<int>();
       _ip = _code + offset;
     } break;
     case Instruction::ID:
       break;
     case Instruction::VAR: {
+      _ip++;
       auto name = read<std::string>();
       _variables.insert({name, std::make_shared<std::any>(std::any(0))});
     } break;
     case Instruction::ASSIGN: {
+      _ip++;
       auto name = read<std::string>();
       auto value = _ds.top();
       _ds.pop();
       _variables.insert_or_assign(name, value);
     } break;
     case Instruction::DEREF: {
+      _ip++;
       auto name = read<std::string>();
       auto itr = _variables.find(name);
       _ds.push(itr->second);
     } break;
     case Instruction::CALL: {
-      _rs.push(_ip);
+      _ip++;
       auto addr = read<int>();
+      _rs.push(_ip);
       _ip = _code + addr;
     } break;
     case Instruction::RET: {
@@ -524,6 +649,7 @@ void ripl::Engine::run() {
     case Instruction::DUP: {
       auto value = _ds.top();
       _ds.push(value);
+      _ip++;
     } break;
     case Instruction::SWAP: {
       auto top = _ds.top();
@@ -532,6 +658,7 @@ void ripl::Engine::run() {
       _ds.pop();
       _ds.push(top);
       _ds.push(bottom);
+      _ip++;
     } break;
     case Instruction::ROTUP: {
       auto top = _ds.top();
@@ -543,6 +670,7 @@ void ripl::Engine::run() {
       _ds.push(top);
       _ds.push(third);
       _ds.push(second);
+      _ip++;
     } break;
     case Instruction::ROTDN: {
       auto top = _ds.top();
@@ -554,9 +682,11 @@ void ripl::Engine::run() {
       _ds.push(second);
       _ds.push(top);
       _ds.push(third);
+      _ip++;
     } break;
     case Instruction::DROP: {
       _ds.pop();
+      _ip++;
     } break;
     case Instruction::INC: {
       auto [valid, value] = fetch<long>();
@@ -564,6 +694,7 @@ void ripl::Engine::run() {
         value++;
         push(value);
       }
+      _ip++;
     } break;
     case Instruction::DEC: {
       auto [valid, value] = fetch<long>();
@@ -571,62 +702,66 @@ void ripl::Engine::run() {
         value--;
         push(value);
       }
+      _ip++;
     } break;
     case Instruction::EXPECT: {
       char input[INPUT_SIZE];
       std::cin.getline(input, INPUT_SIZE);
       std::string token(input);
-      std::any value;
-      std::shared_ptr<std::any> valueptr;
       if (ripl::isIntegral(token)) {
         long l = std::stol(token);
-        value = l;
-        valueptr = std::make_shared<std::any>(value);
-        _ds.push(valueptr);
-        return;
+        push(l);
+        _ip++;
+        continue;
       }
       if (ripl::isFloat(token)) {
         double d = std::stod(token);
-        value = d;
-        valueptr = std::make_shared<std::any>(value);
-        _ds.push(valueptr);
-        return;
+        push(d);
+        _ip++;
+        continue;
       }
       if (ripl::isBool(token)) {
-        value = token == "true" ? true : false;
-        valueptr = std::make_shared<std::any>(value);
-        _ds.push(valueptr);
-        return;
+        bool b = token == "true" ? true : false;
+        push(b);
+        _ip++;
+        continue;
       }
-      valueptr = std::make_shared<std::any>(token);
-      _ds.push(valueptr);
     } break;
     case Instruction::PRINT: {
       auto value = _ds.top();
       _ds.pop();
       if (value->type() == typeid(double)) {
         std::cout << std::any_cast<double>(*value) << std::endl;
-        return;
+        _ip++;
+        continue;
       }
       if (value->type() == typeid(long)) {
         std::cout << std::any_cast<long>(*value) << std::endl;
-        return;
+        _ip++;
+        continue;
       }
       if (value->type() == typeid(std::string)) {
         std::cout << std::any_cast<std::string>(*value) << std::endl;
-        return;
+        _ip++;
+        continue;
       }
       if (value->type() == typeid(bool)) {
-        std::cout << std::any_cast<bool>(*value) << std::endl;
-        return;
+        auto truth = std::any_cast<bool>(*value);
+        if (truth) {
+          std::cout << "true" << std::endl;
+        } else {
+          std::cout << "false" << std::endl;
+        }
+        _ip++;
+        continue;
       }
       std::cout << "Unknown type " << value->type().name() << std::endl;
+      _ip++;
     } break;
     case Instruction::END: {
       _isFinished = true;
       std::cout << "Stack Size: " << _ds.size() << std::endl;
     } break;
     }
-    _ip++;
   }
 }

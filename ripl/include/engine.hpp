@@ -2,10 +2,8 @@
 
 #include <any>
 #include <functional>
-#include <iostream>
 #include <map>
 #include <memory>
-#include <sstream>
 #include <stack>
 #include <string>
 #include <utility>
@@ -20,10 +18,11 @@ public:
   template <typename T> T read();
   template <typename T> void push(T value);
 
-  void push(std::shared_ptr<std::any> value) { _ds.push(value); }
-  std::shared_ptr<std::any> top() { return _ds.top(); }
-  void pop() { _ds.pop(); }
-  int size() { return _ds.size(); }
+  template <typename L, typename R>
+  bool tryOperate(R rhs, std::function<void(L, R)> operate);
+
+  template <typename L, typename R, typename... Rs>
+  bool tryOperate(L lhs, R rhs, std::function<void(L, R)> operate);
 
   template <typename T> std::pair<bool, T> fetch() {
     auto value = _ds.top();
@@ -33,23 +32,6 @@ public:
     }
     return std::make_pair(false, T());
   }
-
-  void replaceValue(std::string &name, std::shared_ptr<std::any> value) {
-    _variables.insert_or_assign(name, value);
-  }
-
-  std::shared_ptr<std::any> fetchValue(std::string &name) {
-    auto itr = _variables.find(name);
-    if (itr == _variables.end()) {
-      std::cerr << "Variable (" << name
-                << ") not found. Make sure you have spelled it correctly."
-                << std::endl;
-      return nullptr;
-    }
-    return itr->second;
-  }
-
-  void finish() { _isFinished = true; }
 
   void pushRS(char *value) { _rs.push(value); }
   char *topRS() { return _rs.top(); }
