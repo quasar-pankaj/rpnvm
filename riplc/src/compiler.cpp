@@ -248,13 +248,12 @@ void ripl::Compiler::compile() {
         auto frame = currentStackFrame();
         dropStackFrame();
         createStackFrame(BranchType::CONDITIONAL);
-        int pos = currentOffset();
         emitInstruction(Instruction::JMP);
         saveCurrentOffset();
         emitInt(0);
         int diskOffset = currentOffset();
         seekToOffset(frame->offset());
-        emitInt(pos);
+        emitInt(diskOffset);
         seekToOffset(diskOffset);
         break;
       }

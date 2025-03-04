@@ -21,9 +21,6 @@ public:
   template <typename L, typename R>
   bool tryOperate(R rhs, std::function<void(L, R)> operate);
 
-  template <typename L, typename R, typename... Rs>
-  bool tryOperate(L lhs, R rhs, std::function<void(L, R)> operate);
-
   template <typename T> std::pair<bool, T> fetch() {
     auto value = _ds.top();
     if (value->type() == typeid(T)) {

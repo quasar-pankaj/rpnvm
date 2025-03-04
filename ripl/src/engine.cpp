@@ -68,11 +68,6 @@ bool ripl::Engine::tryOperate(R rhs, std::function<void(L, R)> operate) {
   return true;
 }
 
-template <typename L, typename R, typename... Rs>
-bool ripl::Engine::tryOperate(L lhs, R rhs, std::function<void(L, R)> operate) {
-
-}
-
 void ripl::Engine::run() {
   _ip = _code;
   const char *end = _code + _codeLen;
@@ -607,7 +602,7 @@ void ripl::Engine::run() {
       _ip++;
       int offset = read<int>();
       auto [valid, value] = fetch<bool>();
-      if (valid && value) {
+      if (valid && !value) {
         _ip = _code + offset;
       }
     } break;
