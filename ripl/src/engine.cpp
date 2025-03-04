@@ -423,6 +423,10 @@ void ripl::Engine::run() {
         _ip++;
         continue;
       }
+      auto [srvalid, srvalue] = fetch<std::string>();
+      auto [slvalid, slvalue] = fetch<std::string>();
+      auto result = (srvalid && slvalid && slvalue == srvalue);
+      push(result);
       _ip++;
     } break;
     case Instruction::NEQ: {
@@ -456,6 +460,10 @@ void ripl::Engine::run() {
         _ip++;
         continue;
       }
+      auto [srvalid, srvalue] = fetch<std::string>();
+      auto [slvalid, slvalue] = fetch<std::string>();
+      auto result = (srvalid && slvalid && slvalue != srvalue);
+      push(result);
       _ip++;
     } break;
     case Instruction::GT: {
@@ -489,6 +497,10 @@ void ripl::Engine::run() {
         _ip++;
         continue;
       }
+      auto [srvalid, srvalue] = fetch<std::string>();
+      auto [slvalid, slvalue] = fetch<std::string>();
+      auto result = (srvalid && slvalid && slvalue > srvalue);
+      push(result);
       _ip++;
     } break;
     case Instruction::LT: {
@@ -522,6 +534,10 @@ void ripl::Engine::run() {
         _ip++;
         continue;
       }
+      auto [srvalid, srvalue] = fetch<std::string>();
+      auto [slvalid, slvalue] = fetch<std::string>();
+      auto result = (srvalid && slvalid && slvalue < srvalue);
+      push(result);
       _ip++;
     } break;
     case Instruction::GTE: {
@@ -555,6 +571,10 @@ void ripl::Engine::run() {
         _ip++;
         continue;
       }
+      auto [srvalid, srvalue] = fetch<std::string>();
+      auto [slvalid, slvalue] = fetch<std::string>();
+      auto result = (srvalid && slvalid && slvalue >= srvalue);
+      push(result);
       _ip++;
     } break;
     case Instruction::LTE: {
@@ -588,6 +608,10 @@ void ripl::Engine::run() {
         _ip++;
         continue;
       }
+      auto [srvalid, srvalue] = fetch<std::string>();
+      auto [slvalid, slvalue] = fetch<std::string>();
+      auto result = (srvalid && slvalid && slvalue <= srvalue);
+      push(result);
       _ip++;
     } break;
     case Instruction::JZ: {
@@ -721,6 +745,9 @@ void ripl::Engine::run() {
         _ip++;
         continue;
       }
+      std::string s(token);
+      push(s);
+      _ip++;
     } break;
     case Instruction::PRINT: {
       auto value = _ds.top();
