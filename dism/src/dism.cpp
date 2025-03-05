@@ -28,7 +28,7 @@ void ripl::Dism::disassemble() {
     Instruction mnemonic = (Instruction)c;
 
     switch (mnemonic) {
-    case Instruction::NOP:
+    case Instruction::NOP: // This instruction is unused
       break;
     case Instruction::PUSHL: {
       long l = readLong();

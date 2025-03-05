@@ -20,10 +20,13 @@ ripl::Engine::Engine(char *filename) {
     return;
   }
 
+  // seek to the end to get the size of the file and then read the whole file in
+  // one shot.
   in.seekg(0, std::ios::end);
   _codeLen = in.tellg();
   in.seekg(0, std::ios::beg);
 
+  // allocate the array with the size of the file.
   _code = new char[_codeLen];
   in.read(_code, _codeLen);
 }
@@ -36,6 +39,7 @@ template <typename T> T ripl::Engine::read() {
   return value;
 }
 
+// Template specialization for string type
 template <> std::string ripl::Engine::read<std::string>() {
   int len = read<int>();
   char *str = new char[len + 1];

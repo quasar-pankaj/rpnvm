@@ -15,8 +15,8 @@ public:
 
   void run();
 
-  template <typename T> T read();
-  template <typename T> void push(T value);
+  template <typename T> T read();           // To read any kind of value
+  template <typename T> void push(T value); // To push any value on _ds
 
   template <typename L, typename R>
   bool tryOperate(R rhs, std::function<void(L, R)> operate);
@@ -29,10 +29,6 @@ public:
     }
     return std::make_pair(false, T());
   }
-
-  void pushRS(char *value) { _rs.push(value); }
-  char *topRS() { return _rs.top(); }
-  void popRS() { _rs.pop(); }
 
 private:
   int _codeLen;
