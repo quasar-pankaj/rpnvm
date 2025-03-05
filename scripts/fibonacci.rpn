@@ -1,0 +1,20 @@
+"Enter the number of Fibonacci:" =
+expect
+1 1 1 1 = =
+first var
+second var
+third var
+first <-
+second <-
+for
+first ->
+second ->
++
+third <-
+second ->
+first <-
+third ->
+second <-
+third -> =
+endfor
+end

@@ -1,0 +1,14 @@
+i var
+j var
+10 i <-
+100 j <-
+5
+for
+dup 3 == if 10 j <- break endif
+dup i <-
+i -> =
+endfor
+i -> =
+j -> =
+end
+

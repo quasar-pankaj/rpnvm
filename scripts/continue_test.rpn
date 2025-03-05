@@ -1,0 +1,1 @@
+10 for dup 5 == if continue endif dup = endfor end

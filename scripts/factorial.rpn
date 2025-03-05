@@ -1,0 +1,13 @@
+"Enter a number:" =	# Print the message
+expect							# wait for user input
+i var								# declare a variable named i
+1										# push 1 on top of stack
+i <-								# assign the value to i
+for
+dup									# n n duplicate the value entered by user
+i ->								# push the value of i on stack
+*										# multiply it with the value
+i <-								# assign it back to i leaving the stack clean
+endfor
+i -> =							# print the value of i
+end

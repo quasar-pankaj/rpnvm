@@ -1,0 +1,1 @@
+"Hello world from RIPL!" say_hello call say_hi call end say_hello { = } say_hi { "Hi Pankaj" = }

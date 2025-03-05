@@ -1,0 +1,1 @@
+true while "Continue loop?" = expect "y" == endwhile end
